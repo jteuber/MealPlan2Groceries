@@ -34,7 +34,9 @@ def parse_ingredient_file(ingredients_file_path):
                 ingredient_info[ingredient_name] = {
                     'Dutch Name': row['Dutch Name'],
                     'Supermarket Link': row['Supermarket Link'],
-                    'Available at Farmers Market': row['Available at Farmers Market']
+                    'Available at Farmers Market': row['Available at Farmers Market'] == 'true',
+                    'Amount': row['Amount'],
+                    'Unit': row['Unit']
                 }
     except FileNotFoundError:
         pass
@@ -112,9 +114,11 @@ def enhance_grocery_list(grocery_list, ingredient_info):
                 'name': item,
                 'quantity': grocery_list[item][0],
                 'unit': grocery_list[item][1],
-                'Dutch Name': ingredient_info[item]['Dutch Name'],
-                'Supermarket Link': ingredient_info[item]['Supermarket Link'],
-                'Available at Farmers Market': ingredient_info[item]['Available at Farmers Market']
+                'dutch': ingredient_info[item]['Dutch Name'],
+                'market': ingredient_info[item]['Available at Farmers Market'],
+                'ah_link': ingredient_info[item]['Supermarket Link'],
+                'ah_amount': ingredient_info[item]['Amount'],
+                'ah_unit': ingredient_info[item]['Unit'],
             })
         else:
             groceries.append({
@@ -135,6 +139,24 @@ ingredient_info = parse_ingredient_file(path + "/ingredients.csv")
 groceries = enhance_grocery_list(grocery_list, ingredient_info)
 
 # Print the combined grocery list
+print("Groceries without extra data:")
 for ingredient in groceries:
-    print(
-        f"* [ ] {ingredient['name']}: {ingredient['quantity']}{ingredient['unit']}")
+    if not 'market' in ingredient:
+        print(
+            f"* [ ] {ingredient['name']}: {ingredient['quantity']}{ingredient['unit']}")
+
+print("\n## AH")
+for ingredient in groceries:
+    if 'market' in ingredient and not ingredient['market']:
+        if ingredient['unit'] == ingredient['ah_unit']:
+            print(
+                f"* [ ] {ingredient['name']}: {int(ingredient['quantity']) / int(ingredient['ah_amount'])} x {ingredient['ah_link']}")
+        else:
+            print(
+                f"* [ ] {ingredient['name']}: {ingredient['quantity']}{ingredient['unit']} of {ingredient['ah_link']}")
+
+print("\n## Market")
+for ingredient in groceries:
+    if 'market' in ingredient and ingredient['market']:
+        print(
+            f"* [ ] {ingredient['dutch']}: {ingredient['quantity']}{ingredient['unit']}")
